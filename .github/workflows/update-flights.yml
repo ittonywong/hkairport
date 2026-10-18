@@ -1,0 +1,62 @@
+# 每 5 分鐘從香港機場管理局抓取最新航班資料，然後發佈到 GitHub Pages（免費）。
+# Fetch live HKIA flight data every ~5 minutes and publish the site to GitHub Pages.
+name: Update flights and deploy
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # GitHub 實際可能延遲幾分鐘 (UTC time; GitHub may delay runs)
+  workflow_dispatch: {}      # 可以喺 Actions 頁面手動撳 "Run workflow"
+  push:
+    branches: [main]
+
+permissions:
+  contents: write   # 每日寫一次 heartbeat，防止 60 日冇活動被停用
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Fetch latest flight data (HKIA open data)
+        run: python3 scripts/fetch_flights.py
+
+      - name: Build site folder
+        run: |
+          mkdir -p _site
+          cp -r index.html assets data _site/
+          touch _site/.nojekyll
+
+      - name: Daily heartbeat commit (keeps the schedule alive)
+        run: |
+          today="$(date -u +%F)"
+          if [ "$(cat .github/heartbeat.txt 2>/dev/null)" != "$today" ]; then
+            echo "$today" > .github/heartbeat.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .github/heartbeat.txt
+            git commit -m "heartbeat $today [skip ci]" && git push || echo "heartbeat push skipped"
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
