@@ -28,6 +28,16 @@
     return { ymd: d.getUTCFullYear() + "-" + p(d.getUTCMonth() + 1) + "-" + p(d.getUTCDate()), hm: p(d.getUTCHours()) + ":" + p(d.getUTCMinutes()),
              hms: p(d.getUTCHours()) + ":" + p(d.getUTCMinutes()) + ":" + p(d.getUTCSeconds()), dm: p(d.getUTCDate()) + "/" + p(d.getUTCMonth() + 1) };
   };
+  // ---- self-drawn SVG icons (no logos / trademarks) ----
+  var PLANE = "M12 2c.8 0 1.3.9 1.3 2v5.2l7.7 4.3v2l-7.7-2.3v4.6l2.2 1.6v1.6L12 20l-3.5 1v-1.6l2.2-1.6v-4.6L3 15.5v-2l7.7-4.3V4c0-1.1.5-2 1.3-2z";
+  function icon(kind, cls) {
+    var rot = kind === "arr" ? 125 : 55, y = kind === "arr" ? 1.5 : -1.5;
+    return '<svg class="ico ' + (cls || "") + '" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<g transform="translate(0 ' + y + ') rotate(' + rot + ' 12 12) translate(2.4 2.4) scale(.8)"><path fill="currentColor" d="' + PLANE + '"/></g>' +
+      '<path d="M2 22.5h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".55"/></svg>';
+  }
+  var EMPTY_ART = '<svg class="empty-art" viewBox="0 0 160 60" aria-hidden="true"><path d="M8 52 C 50 50, 90 30, 132 14" fill="none" stroke="#9fb3c2" stroke-width="2" stroke-dasharray="5 6" stroke-linecap="round"/>' +
+    '<g transform="translate(140 11) rotate(68) scale(1.1) translate(-12 -12)" fill="#0f766e"><path d="' + PLANE + '"/></g><path d="M4 57h152" stroke="#c9d6df" stroke-width="2"/></svg>';
   var at = function (ymd, hm) { return Date.parse(ymd + "T" + hm + ":00+08:00"); };
 
   // ---- status parsing (API status is requested in English) ----
@@ -117,7 +127,7 @@
     var timeHtml = '<div class="big">' + big.hm + "</div>";
     if (x.st.ms && (big.hm !== sch.hm || big.ymd !== sch.ymd)) timeHtml += '<div class="orig">' + esc(t.sched) + " <s>" + (sch.ymd !== big.ymd ? sch.dm + " " : "") + sch.hm + "</s></div>";
     if (big.ymd !== today) timeHtml += '<div class="day">' + big.dm + "</div>";
-    var places = r.p.map(function (c) { return esc(placeName(c)) + ' <span class="code">' + esc(c) + "</span>"; }).join(" · ");
+    var places = icon(x.arr ? "arr" : "dep", "pl") + r.p.map(function (c) { return esc(placeName(c)) + ' <span class="code">' + esc(c) + "</span>"; }).join(" · ");
     var cs = x.nos.slice(1);
     var pills = [];
     if (k === "other") pills.push('<span class="k-other">' + esc(x.st.raw) + "</span>");
@@ -140,13 +150,76 @@
       '<div class="pill">' + pills.join("") + "</div></div>";
   }
 
+  // ---- gate board v3: drawn like an HKIA gate pillar (CSS/SVG only, no logos) ----
+  var ROOF = '<svg class="gp-roof" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
+    '<defs><pattern id="gpLat" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M0 0L36 36M36 0L0 36" stroke="#fff" stroke-width="1.8"/></pattern>' +
+    '<linearGradient id="gpSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9c9d6"/><stop offset="1" stop-color="#dfe7ee"/></linearGradient></defs>' +
+    '<path d="M0 0H400V48Q200 92 0 48Z" fill="url(#gpSky)"/><path d="M0 0H400V48Q200 92 0 48Z" fill="url(#gpLat)" opacity=".85"/>' +
+    '<path d="M0 48Q200 92 400 48" fill="none" stroke="#9fb1c1" stroke-width="2"/>' +
+    '<g stroke="#c4d1dc" stroke-width="2"><path d="M60 62V90"/><path d="M340 62V90"/></g></svg>';
+  function gateBoard(g, deps, now) {
+    var t = T(), atG = deps.filter(function (x) { return x.raw.g.toUpperCase() === g.toUpperCase(); });
+    var up = atG.filter(function (x) { return !DONE[x.st.kind] && !isPast(x, now); });
+    // the flight being boarded comes first (like a real gate screen), then the next one by latest expected time
+    var ACT = { boarding: 1, finalCall: 1, boardingSoon: 2, gateClosed: 3 };
+    up = up.slice().sort(function (a, b) { return (ACT[a.st.kind] || 9) - (ACT[b.st.kind] || 9) || a.best - b.best; });
+    var cur = up[0], recent = null;
+    if (!cur) { // nothing upcoming: show the latest departure/cancellation from this gate (within the "earlier" window)
+      recent = atG.filter(function (x) { return (x.st.kind === "departed" || x.st.kind === "cancelled") && !isPast(x, now); }).pop() || null;
+      cur = recent;
+    }
+    var clock = '<div class="gp-clock" title="' + esc(t.now) + '">' + hkParts(now).hm + "</div>";
+    var top = '<div class="gp-gatelbl">' + esc(t.gate) + '</div><div class="gp-num">' + esc(g) + "</div>";
+    var scene = function (inner, attrs, below) {
+      return '<div class="gp" ' + attrs + '><div class="gp-scene">' + ROOF + clock + '<div class="gp-stand"><div class="gp-pillar">' + inner + '</div>' +
+        '<div class="gp-base" aria-hidden="true"></div></div><div class="gp-floor" aria-hidden="true"><div class="gp-shadow"></div><div class="gp-reflect"></div></div></div></div>' +
+        (below ? '<div class="gp-later">' + below + "</div>" : ""); // later flights: separate card below the whole pillar scene
+    };
+    if (!cur) return scene(top + '<div class="gp-sign"><div class="gp-white gp-empty">' + esc(t.boardNone) + "</div></div>", 'data-board-gate="' + esc(g) + '" data-board-kind="none"');
+    var k = cur.st.kind, r = cur.raw, sch = hkParts(cur.sched), nt = cur.st.ms ? hkParts(cur.st.ms) : null;
+    var late = cur.delay >= 15 && k !== "cancelled" && k !== "departed";
+    var stCls = k === "est" && late ? "delayed" : k;
+    var stTxt = k === "other" ? cur.st.raw : stCls === "delayed" ? t.st.delayed + " " + nt.hm : (k === "departed" && nt ? t.st[k] + " " + nt.hm : t.st[k]);
+    var dly = late ? '<span class="gp-dly">' + esc(cur.delay >= 120 ? fmt(t.delayH, { h: Math.floor(cur.delay / 60), m: cur.delay % 60 }) : fmt(t.delayMin, { m: cur.delay })) + "</span>" : "";
+    var cs = cur.nos.length > 1 ? '<div class="gp-cs" data-fitw="1">' + esc(cur.nos[1]) + (cur.nos.length > 2 ? ' <span class="gp-more">+' + (cur.nos.length - 2) + "</span>" : "") + "</div>" : "";
+    var dest = r.p.map(placeName).join(" / ");
+    var sign = '<div class="gp-sign' + (k === "cancelled" ? " cx" : "") + '">' +
+      '<div class="gp-white"><div class="gp-fl"><div class="gp-fno" data-fitw="1">' + esc(cur.nos[0]) + "</div>" + cs + '</div><div class="gp-time">' + sch.hm +
+        (sch.ymd !== hkParts(now).ymd ? '<span class="gp-day">' + sch.dm + "</span>" : "") + "</div></div>" +
+      '<div class="gp-red"><div class="gp-hkto">' + esc(t.hkTo) + '</div><div class="gp-dest" data-fit="1" title="' + esc(r.p.join(" / ")) + '">' + esc(dest) + "</div></div></div>";
+    var status = '<div class="gp-status"><span class="gp-st st-' + stCls + '">' + esc(stTxt) + "</span>" + dly + "</div>" +
+      '<div class="gp-meta">' + esc(r.tm) + (r.ai ? " · " + esc(t.aisle) + " " + esc(r.ai) : "") + "</div>";
+    var nexts = (recent ? up : up.slice(1)).slice(0, 3);
+    var later = nexts.length ? '<div class="gp-next"><div class="gp-nh">' + esc(t.bNext) + "</div>" + nexts.map(function (x) {
+      return '<div class="gp-nr"><span class="gp-nt">' + hkParts(x.sched).hm + '</span><b>' + esc(x.nos[0]) + '</b><span class="gp-np">' + esc(x.raw.p.map(placeName).join(" / ")) +
+        '</span><span class="gp-st sm st-' + x.st.kind + '">' + esc(x.st.kind === "other" ? x.st.raw : t.st[x.st.kind] + (x.st.kind === "est" && x.st.ms ? " " + hkParts(x.st.ms).hm : "")) + "</span></div>"; }).join("") + "</div>" : "";
+    return scene(top + sign + status, 'data-board-gate="' + esc(g) + '" data-board-fno="' + esc(cur.nos[0]) + '" data-board-kind="' + stCls + '"', later);
+  }
+  // shrink the destination text until it fits the red panel (long names like "Ho Chi Minh City" or Māori/Japanese strings)
+  function fitBoard() {
+    var els = document.querySelectorAll("#board [data-fit]");
+    for (var i = 0; i < els.length; i++) {
+      var e = els[i], size = 2.1; e.style.fontSize = size + "em";
+      while (size > 0.95 && (e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1)) { size -= 0.1; e.style.fontSize = size.toFixed(2) + "em"; }
+    }
+    // flight numbers: shrink (width only) when the white panel is narrow, e.g. 360px phone at A+
+    els = document.querySelectorAll("#board [data-fitw]");
+    for (i = 0; i < els.length; i++) {
+      var w = els[i], f = 1; w.style.fontSize = "";
+      var base = parseFloat(getComputedStyle(w).fontSize);
+      while (f > 0.6 && w.scrollWidth > w.clientWidth + 1) { f -= 0.05; w.style.fontSize = (base * f).toFixed(1) + "px"; }
+    }
+  }
+  window.__hkaFit = fitBoard; // used by automated layout tests
+  window.addEventListener("resize", fitBoard);
+
   function render() {
     var t = T(), now = Date.now(), today = hkParts(now).ymd;
     document.documentElement.lang = S.lang;
     document.documentElement.style.setProperty("--fs", FS[S.fs] + "px");
     document.title = t.title + " | HKIA";
     $("title").textContent = t.title;
-    $("tab-dep").textContent = t.dep; $("tab-arr").textContent = t.arr;
+    $("tab-dep").innerHTML = icon("dep") + "<span>" + esc(t.dep) + "</span>"; $("tab-arr").innerHTML = icon("arr") + "<span>" + esc(t.arr) + "</span>";
     $("tab-dep").classList.toggle("on", S.tab === "dep"); $("tab-arr").classList.toggle("on", S.tab === "arr");
     $("tab-dep").setAttribute("aria-selected", S.tab === "dep"); $("tab-arr").setAttribute("aria-selected", S.tab === "arr");
     [0, 1, 2].forEach(function (i) { $("fs-" + i).classList.toggle("on", S.fs === i); $("fs-" + i).title = t.font; });
@@ -172,9 +245,12 @@
     $("count").textContent = fmt(t.count, { n: shown.length });
     $("earlier").hidden = !earlier;
     $("earlier").textContent = S.showEarlier ? t.hideEarlier : fmt(t.showEarlier, { n: earlier });
-    $("list").innerHTML = shown.length ? shown.slice(0, S.limit).map(function (x) { return card(x, now, today); }).join("") : '<div class="empty">' + esc(t.none) + "</div>";
+    $("list").innerHTML = shown.length ? shown.slice(0, S.limit).map(function (x) { return card(x, now, today); }).join("") : '<div class="empty">' + EMPTY_ART + "<div>" + esc(t.none) + "</div></div>";
     var remaining = Math.max(0, shown.length - S.limit);
     $("more").hidden = remaining === 0; $("more").textContent = remaining ? t.more + " (" + remaining + ")" : "";
+    // gate display board: dropdown gate, or text like "閘口 30" / "gate 30"
+    var gm = S.q.match(GATE_RE), bg = S.tab === "dep" ? (S.gate || (gm ? gm[1].toUpperCase() : "")) : "";
+    if ($("board")) { $("board").hidden = !bg; $("board").innerHTML = bg ? gateBoard(bg, D._dep, now) : ""; if (bg) fitBoard(); }
     var su = D.sourceUpdated && D.sourceUpdated[S.tab];
     $("upd").textContent = t.pageUpd + " " + hkParts(S.loadedAt).hms + " (" + t.hkt + ")";
     $("src").textContent = t.srcTime + " " + (su ? hkParts(Date.parse(su)).hm : "–") + " · " + t.fetched + " " + hkParts(Date.parse(D.generatedAt)).hm;
