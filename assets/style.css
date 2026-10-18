@@ -147,3 +147,37 @@ h1 .logo{width:1.6rem;height:1.6rem;flex:0 0 auto;filter:drop-shadow(0 1px 2px r
   .gp-num{font-size:4.7rem;margin-bottom:.45rem}
   .gp-white{min-height:3.8rem;padding:.4rem .6rem}
 }
+/* ===== v5: departure gate-sign cards, search hint, pillar detail view ===== */
+.qhint{font-size:.78rem;color:var(--teal);font-weight:600;margin:.1rem .1rem .3rem}
+.card.sc{display:block;padding:.5rem;border-left:0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .08s}
+.card.sc:active{transform:scale(.985)}
+.card.sc:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.sc-row{display:flex;border-radius:.35rem;overflow:hidden;box-shadow:0 0 0 2px #0a1a33,0 3px 8px rgba(10,26,51,.25)}
+.sc-gate{flex:0 0 4.1rem;background:linear-gradient(90deg,#0b1f3c,#1b3d6d 55%,#12305a);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.3rem .2rem;text-align:center}
+.sc-gate .l{font-size:.6rem;color:#9fb6d3;font-weight:700;line-height:1.1}
+.sc-gate .n{font-size:1.9rem;font-weight:800;line-height:1;color:#fcd116;font-variant-numeric:tabular-nums}
+.sc-gate .n.na{color:#64748b}
+.sc-sign{flex:1;min-width:0;display:flex;flex-direction:column}
+.sc-white{display:flex;justify-content:space-between;align-items:center;gap:.4rem;padding:.35rem .55rem;background:#fff;color:#0f172a}
+.sc-fl{min-width:0;flex:1 1 auto;overflow:hidden}
+.sc-fno{font-size:1.2rem;font-weight:800;white-space:nowrap;overflow:hidden;line-height:1.15}
+.sc-cs{font-size:.78rem;color:#334155;font-weight:700;white-space:nowrap;overflow:hidden}
+.sc-cs .more{font-size:.68rem;color:#64748b;font-weight:600}
+.sc-time{flex:0 0 auto;text-align:right;font-size:1.4rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.sc-time .day{display:block;font-size:.62rem;color:#64748b;font-weight:600;margin-top:.1rem}
+.sc-time .nt{display:block;font-size:.72rem;color:#92400e;font-weight:800;margin-top:.15rem}
+.sc-red{background:#c8102e;color:#fff;padding:.22rem .55rem .32rem;min-width:0}
+.sc-hkto{font-size:.66rem;font-weight:600;line-height:1.2}
+.sc-dest{font-size:1.35rem;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden}
+.sc-dest.wrap{white-space:normal;overflow-wrap:anywhere}
+.sc-dest .code{font-size:.55em;font-weight:700;opacity:.85;margin-left:.35em}
+.card.sc.cx .sc-fno,.card.sc.cx .sc-dest{text-decoration:line-through}
+.sc-foot{margin-top:.4rem}
+.sc-meta{font-size:.72rem;color:var(--mute);margin-top:.2rem}
+.detail{margin-top:.2rem}
+.backbtn{display:inline-flex;align-items:center;gap:.3rem;margin:.1rem 0 .55rem;padding:.5rem .9rem;border:0;border-radius:.55rem;background:var(--navy);color:#fff;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(11,60,93,.25)}
+/* back button sits on the pillar's ceiling (left), the clock stays on the right, so the gate number and sign stay on the first screen */
+.detail{position:relative}
+.detail .backbtn{position:absolute;top:.45rem;left:.45rem;z-index:3;margin:0;padding:.38rem .75rem;font-size:.85rem;max-width:calc(100% - 6.5rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.detail .gp-scene{padding-top:3rem}
+@media (max-width:380px){.detail .gp-scene{padding-top:2.9rem}}
