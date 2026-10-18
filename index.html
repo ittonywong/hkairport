@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b3c5d">
+<title>香港國際機場航班 HKIA Flights</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%E2%9C%88%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="row">
+    <h1 id="title">香港國際機場航班</h1>
+    <select id="lang" aria-label="Language"></select>
+  </div>
+  <div class="row tools">
+    <div class="tabs" role="tablist">
+      <button id="tab-dep" role="tab" class="tab" data-tab="dep">離港</button>
+      <button id="tab-arr" role="tab" class="tab" data-tab="arr">抵港</button>
+    </div>
+    <div class="font" role="group" id="fontgrp">
+      <button id="fs-0" data-fs="0" aria-label="A-">A−</button><button id="fs-1" data-fs="1" aria-label="A">A</button><button id="fs-2" data-fs="2" aria-label="A+">A+</button>
+    </div>
+  </div>
+  <div class="row filters">
+    <input id="q" type="search" autocomplete="off" enterkeyhint="search">
+    <select id="gate" aria-label="Gate"></select>
+  </div>
+</header>
+<div id="status" class="status">
+  <div><span id="upd"></span> · <span id="cd"></span></div>
+  <div id="src" class="small"></div>
+  <div id="warn" class="warn" hidden></div>
+  <button id="refresh" class="refresh">↻</button>
+</div>
+<main>
+  <div id="count" class="count"></div>
+  <button id="earlier" class="linkbtn" hidden></button>
+  <div id="list"></div>
+  <button id="more" class="linkbtn" hidden></button>
+</main>
+<footer id="foot"></footer>
+<script src="assets/config.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
