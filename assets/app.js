@@ -7,13 +7,10 @@
     get: function (k, d) { try { var v = localStorage.getItem("hka." + k); return v === null ? d : v; } catch (e) { return d; } },
     set: function (k, v) { try { localStorage.setItem("hka." + k, v); } catch (e) {} }
   };
+  var LCODE = {"zh-Hant":"繁","zh-Hans":"简",en:"EN",ja:"日",mi:"Mā",ko:"한"};
   function pickLang() {
     var s = store.get("lang", null); if (s && I[s]) return s;
-    var n = (navigator.language || "").toLowerCase();
-    if (/^zh-(cn|sg|hans)/.test(n)) return "zh-Hans";
-    if (/^zh/.test(n)) return "zh-Hant";
-    if (/^ja/.test(n)) return "ja"; if (/^ko/.test(n)) return "ko"; if (/^mi/.test(n)) return "mi";
-    return "zh-Hant"; // default for HK users (English phones too); can switch any time
+    return "en"; // first visit: English; saved choice always wins
   }
   var S = { lang: pickLang(), fs: +store.get("fs", 1), tab: store.get("tab", "dep"), q: "", gate: "", showEarlier: false,
             limit: 100, data: null, loadedAt: null, loads: 0, error: null, left: REFRESH };
@@ -200,6 +197,85 @@
     }
   }
 
+  // ---- v8: little people on the gate floor follow the real flight status (original CSS figures, decorative) ----
+  // status -> scene (raw HKIA "status" text; statusCode is always null in the feed):
+  //   ""(scheduled), "Boarding Soon", "Est at HH:MM" (incl. delayed), "Delayed", anything unknown -> wait
+  //   "Boarding" -> board   |   "Final Call", "Gate Closed" -> closed (barrier tape)
+  //   "Dep HH:MM", "Diverted", no flight at this gate -> empty (one person dozing, Zzz)   |   "Cancelled" -> cx (one traveller leaving)
+  var SCENE = { boarding: "board", finalCall: "closed", gateClosed: "closed", departed: "empty", diverted: "empty", atGate: "empty", landed: "empty", cancelled: "cx" };
+  function sceneFor(cur) { return cur ? (SCENE[cur.st.kind] || "wait") : "empty"; }
+  // a new random cast on every page load (kept for the whole visit so a data refresh does not reshuffle people)
+  var PAL = ["#0f766e", "#1e3a8a", "#64748b", "#a16207", "#0e7490", "#334e68", "#4d7c0f", "#6d28d9", "#b45309", "#475569", "#0369a1", "#9ca3af", "#78716c", "#155e75", "#7c3aed", "#ca8a04"];
+  var PANTS = ["#1f2937", "#334155", "#3f3f46", "#1e3a5f", "#57534e", "#44403c", "#0f172a"];
+  var SKIN = ["#f1d3b3", "#e8c39e", "#d9a77c", "#c68a5e", "#8d5a3b", "#6b4228"];
+  var HAIR = ["#1f1b18", "#2b2b33", "#4a3426", "#6b4a2e", "#a67c52", "#d8c08a"], GREY = ["#d1d5db", "#e5e7eb", "#9ca3af"];
+  var BAGC = ["#1f2a37", "#0f3d3a", "#374151", "#1e3a5f", "#52525b"];
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function who(sex) { return { sex: sex || (Math.random() < 0.5 ? "m" : "f"), cl: pick(PAL), lc: pick(PANTS), sk: pick(SKIN), hr: pick(HAIR), bc: pick(BAGC) }; }
+  function castMember(type) {
+    var p = who(type === "man" ? "m" : type === "woman" ? "f" : null); p.type = type;
+    if (type === "elder") { p.hr = pick(GREY); p.stick = 1; }
+    if (type === "suitcase") p.bag = 1;
+    if (type === "backpack") p.bp = 1;
+    if (type === "family") { p.a = who("m"); p.b = who("f"); p.kid = who(); p.stroller = Math.random() < 0.6; p.kid.small = 1; }
+    return p;
+  }
+  function mkCast() {
+    var t = ["man", "woman", "elder", "family", "suitcase", "backpack"], i, j, x;
+    for (i = t.length - 1; i > 0; i--) { j = Math.floor(Math.random() * (i + 1)); x = t[i]; t[i] = t[j]; t[j] = x; }
+    for (i = 0; i < 6; i++) t.push(pick(["man", "woman", "suitcase", "backpack", "elder", "man", "woman", "suitcase"]));
+    return t.map(castMember);
+  }
+  function one(p, mode, cls, style) {
+    var c = "pp " + mode + " " + (p.sex === "f" ? "fem" : "mal") + (p.stick ? " old" : "") + (p.small ? " kid" : "") + (cls ? " " + cls : "");
+    return '<i class="' + c + '" data-f="' + (p.type || "kid") + '" style="--cl:' + p.cl + ";--lc:" + p.lc + ";--sk:" + p.sk + ";--hr:" + p.hr + ";--bc:" + p.bc + ";" + (style || "") + '">' +
+      (p.sex === "f" ? '<b class="hr"></b>' : "") + '<b class="hd"></b>' + (p.bp ? '<b class="bp"></b>' : "") + '<b class="tb"></b>' + (p.sex === "f" ? '<b class="sk"></b>' : "") +
+      '<b class="lg"></b><b class="lg lg2"></b>' + (mode === "sit" ? '<b class="sh"></b><b class="sh sh2"></b>' : "") +
+      (p.bag ? '<b class="bag"></b>' : "") + (p.stick ? '<b class="stk"></b>' : "") + (cls && / hand/.test(" " + cls) ? '<b class="arm"></b>' : "") + "</i>";
+  }
+  function fig(p, mode, cls, style) {
+    if (p.type !== "family") return one(p, mode, cls, style);
+    if (mode === "sit") return one(p.b, "sit", cls, style);
+    return '<i class="grp' + (p.stroller ? "" : " ns") + (cls ? " " + cls : "") + '" data-f="family"' + (style ? ' style="' + style + '"' : "") + ">" + one(p.a, mode, "g1") +
+      (p.stroller ? '<b class="stroller" style="--cl:' + p.a.bc + '"><b class="sb"></b><b class="sw"></b><b class="sw sw2"></b></b>' : "") +
+      one(p.b, mode, "g2 hand") + one(p.kid, mode, "g3") + "</i>";
+  }
+  function trk(cls, inner, style) { return '<div class="pp-trk ' + cls + '"' + (style ? ' style="' + style + '"' : "") + ">" + inner + "</div>"; }
+  var BENCH = '<div class="gp-bench"><b class="bk"></b></div>';
+  function crowd(key, g, fno) {
+    var C = S.cast || (S.cast = mkCast()), ph = -((Date.now() / 1000) % 86400).toFixed(1), h = "", i;
+    var solo = C.filter(function (p) { return p.type !== "family"; });
+    if (key === "board") { // a queue walking into the gate
+      h = BENCH + fig(solo[5], "sit", "nod", "left:4.2%");
+      for (i = 0; i < 5; i++) h += trk("q", fig(C[i], "walk", "flip"), "--x:" + (56 + i * 9) + "%;--d:" + (-i * 3) + "s");
+    } else if (key === "closed") { // retractable barrier tape across the gate, people held back, sparse
+      h = BENCH + '<div class="gp-tape"><b class="post"></b><b class="belt"></b><b class="post p2"></b></div>' +
+        fig(solo[0], "stand", "sway", "left:24%") + trk("late", fig(solo[1], "walk", "flip")) + fig(solo[1], "stand", "flip blocked", "left:69%");
+    } else if (key === "cx") { // cancelled: the gate is quiet, one traveller walks away
+      h = BENCH + trk("leave", fig(solo.filter(function (p) { return p.bag; })[0] || solo[0], "walk"));
+    } else if (key === "empty") { // departed / no flight: one person dozing on the bench
+      h = BENCH + one(solo[2], "sit", "doze", "left:4.2%").replace(/<\/i>$/, '<b class="zzz"><b>z</b><b>z</b><b>Z</b></b></i>');
+    } else { // wait: wander around and sit waiting
+      h = BENCH + fig(solo[3], "sit", "read", "left:4.2%") + fig(solo[4], "sit", "nod", "left:calc(4.2% + 2.6em)") +
+        fig(C[0], "stand", "sway", "left:27%") + fig(C[1], "stand", "sway2 flip", "left:66%") +
+        trk("w1", fig(C[2], "walk", "far")) + trk("w2", fig(C[3], "walk", "flip")) + trk("w3", fig(C[4], "walk", "far"));
+    }
+    return '<div class="gp-crowd sc-' + key + '" data-scene="' + key + '" data-gate="' + esc(g || "") + '" data-fno="' + esc(fno || "") + '" style="--ph:' + ph + 's">' + h + "</div>";
+  }
+  // smooth scene change on data refresh: old crowd fades out over the new one (skipped for reduced motion)
+  var RM = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
+  function setBoard(el, html) {
+    var old = el.querySelector(".gp-crowd");
+    el.innerHTML = html;
+    var nw = el.querySelector(".gp-crowd");
+    if (old && nw && !RM.matches && old.dataset.gate === nw.dataset.gate && old.dataset.fno === nw.dataset.fno && old.dataset.scene !== nw.dataset.scene) {
+      old.classList.remove("in"); old.classList.add("out"); nw.classList.add("in");
+      nw.parentNode.insertBefore(old, nw);
+      setTimeout(function () { if (old.parentNode) old.parentNode.removeChild(old); nw.classList.remove("in"); }, 1300);
+    }
+  }
+  window.__hkaScene = { sceneFor: sceneFor, crowd: crowd, newCast: function () { S.cast = mkCast(); } };
+
   // ---- gate board v3: drawn like an HKIA gate pillar (CSS/SVG only, no logos) ----
   var ROOF = '<svg class="gp-roof" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
     '<defs><pattern id="gpLat" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M0 0L36 36M36 0L0 36" stroke="#fff" stroke-width="1.8"/></pattern>' +
@@ -221,12 +297,13 @@
     }
     var clock = '<div class="gp-clock" title="' + esc(t.now) + '">' + hkParts(now).hm + "</div>";
     var top = '<div class="gp-gatelbl">' + esc(t.gate) + '</div><div class="gp-num">' + esc(g || "–") + "</div>";
-    var scene = function (inner, attrs, below) {
+    var scene = function (inner, attrs, below, key, fno) {
       return '<div class="gp" ' + attrs + '><div class="gp-scene">' + ROOF + clock + '<div class="gp-stand"><div class="gp-pillar">' + inner + '</div>' +
-        '<div class="gp-base" aria-hidden="true"></div></div><div class="gp-floor" aria-hidden="true"><div class="gp-shadow"></div><div class="gp-reflect"></div></div></div></div>' +
+        '<div class="gp-base" aria-hidden="true"></div></div><div class="gp-floor" aria-hidden="true"><div class="gp-shadow"></div><div class="gp-reflect"></div>' + crowd(key, g, fno) + '</div>' +
+        '<span class="sr">' + esc(t.scene[key]) + "</span></div></div>" +
         (below ? '<div class="gp-later">' + below + "</div>" : ""); // later flights: separate card below the whole pillar scene
     };
-    if (!cur) return scene(top + '<div class="gp-sign"><div class="gp-white gp-empty">' + esc(t.boardNone) + "</div></div>", 'data-board-gate="' + esc(g) + '" data-board-kind="none"');
+    if (!cur) return scene(top + '<div class="gp-sign"><div class="gp-white gp-empty">' + esc(t.boardNone) + "</div></div>", 'data-board-gate="' + esc(g) + '" data-board-kind="none" data-scene="empty"', "", "empty", "");
     var k = cur.st.kind, r = cur.raw, sch = hkParts(cur.sched), nt = cur.st.ms ? hkParts(cur.st.ms) : null;
     var late = cur.delay >= 15 && k !== "cancelled" && k !== "departed";
     var stCls = k === "est" && late ? "delayed" : k;
@@ -244,7 +321,7 @@
     var later = nexts.length ? '<div class="gp-next"><div class="gp-nh">' + esc(t.bNext) + "</div>" + nexts.map(function (x) {
       return '<div class="gp-nr"><span class="gp-nt">' + hkParts(x.sched).hm + '</span><b>' + esc(x.nos[0]) + '</b><span class="gp-np">' + esc(x.raw.p.map(placeName).join(" / ")) +
         '</span><span class="gp-st sm st-' + x.st.kind + '">' + esc(x.st.kind === "other" ? x.st.raw : t.st[x.st.kind] + (x.st.kind === "est" && x.st.ms ? " " + hkParts(x.st.ms).hm : "")) + "</span></div>"; }).join("") + "</div>" : "";
-    return scene(top + sign + status, 'data-board-gate="' + esc(g) + '" data-board-fno="' + esc(cur.nos[0]) + '" data-board-kind="' + stCls + '"', later);
+    return scene(top + sign + status, 'data-board-gate="' + esc(g) + '" data-board-fno="' + esc(cur.nos[0]) + '" data-board-kind="' + stCls + '" data-scene="' + sceneFor(cur) + '"', later, sceneFor(cur), cur.nos[0]);
   }
   // shrink the destination text until it fits the red panel (long names like "Ho Chi Minh City" or Māori/Japanese strings)
   function fitBoard() {
@@ -271,6 +348,8 @@
     document.documentElement.style.setProperty("--fs", FS[S.fs] + "px");
     document.title = t.title + " | HKIA";
     $("title").textContent = t.title;
+    var lc = $("lcodeT"); if (lc) lc.textContent = LCODE[S.lang] || S.lang;
+    var fg = $("fontgrp"); if (fg) fg.setAttribute("aria-label", t.font);
     $("tab-dep").innerHTML = icon("dep") + "<span>" + esc(t.dep) + "</span>"; $("tab-arr").innerHTML = icon("arr") + "<span>" + esc(t.arr) + "</span>";
     $("tab-dep").classList.toggle("on", S.tab === "dep"); $("tab-arr").classList.toggle("on", S.tab === "arr");
     $("tab-dep").setAttribute("aria-selected", S.tab === "dep"); $("tab-arr").setAttribute("aria-selected", S.tab === "arr");
@@ -315,7 +394,7 @@
     $("more").hidden = remaining === 0; $("more").textContent = remaining ? t.more + " (" + remaining + ")" : "";
     // gate display board: dropdown gate, or text like "閘口 30" / "gate 30"
     var bg = S.tab === "dep" ? (S.gate || (gq && gq.gate) || "") : "";
-    if ($("board")) { $("board").hidden = !bg; $("board").innerHTML = bg ? gateBoard(bg, D._dep, now) : ""; if (bg) fitBoard(); }
+    if ($("board")) { $("board").hidden = !bg; setBoard($("board"), bg ? gateBoard(bg, D._dep, now) : ""); if (bg) fitBoard(); }
     renderDetail(now);
     var su = D.sourceUpdated && D.sourceUpdated[S.tab];
     $("upd").textContent = t.pageUpd + " " + hkParts(S.loadedAt).hms + " (" + t.hkt + ")";
@@ -332,7 +411,7 @@
     if (!on) { $("detailBody").innerHTML = ""; return; }
     var f = null; S.data._dep.forEach(function (x) { if (fkey(x) === S.focus) f = x; });
     if (!f) { $("detailBody").innerHTML = '<div class="empty">' + EMPTY_ART + "<div>" + esc(T().none) + "</div></div>"; return; }
-    $("detailBody").innerHTML = gateBoard(f.raw.g, S.data._dep, now, f); fitBoard();
+    setBoard($("detailBody"), gateBoard(f.raw.g, S.data._dep, now, f)); fitBoard();
   }
   function openFlight(key, push) {
     if (!S.focus) S.listScroll = window.scrollY;

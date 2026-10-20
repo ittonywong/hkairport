@@ -7,13 +7,19 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","PingFang HK","Noto
 .row+.row{margin-top:.5rem}
 h1{font-size:1.15rem;margin:0;font-weight:700}
 select,input,button{font:inherit}
-#lang{background:#164e75;color:#fff;border:1px solid #3d7aa3;border-radius:.4rem;padding:.25rem .3rem;max-width:9.5rem}
-.tabs{display:flex;background:#164e75;border-radius:.5rem;padding:.15rem}
-.tab{border:0;background:transparent;color:#cfe3f1;padding:.4rem .9rem;border-radius:.4rem;font-weight:600;cursor:pointer}
+.chrome{display:flex;align-items:center;gap:.35rem;flex:0 0 auto}
+.langw{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:32px;min-height:32px;padding:0 .1rem;cursor:pointer;color:#fff}
+.langw .lcode{display:inline-flex;align-items:center;gap:.18rem;font-size:.78rem;font-weight:700;border:1px solid rgba(255,255,255,.85);border-radius:1rem;padding:.1rem .4rem;line-height:1.2;white-space:nowrap;background:rgba(255,255,255,.1)}
+.langw .lcode svg{width:.85rem;height:.85rem}
+.langw select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:1rem;min-height:0}
+.langw:focus-within .lcode{outline:3px solid #7dd3fc;outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.tabs{display:flex;background:#164e75;border-radius:.5rem;padding:.15rem;flex:1 1 auto;min-width:0}
+.tab{border:0;background:transparent;color:#cfe3f1;padding:.35rem .7rem;border-radius:.4rem;font-weight:600;cursor:pointer;min-height:32px}
 .tab.on{background:var(--teal);color:#fff}
-.font{display:flex;border:1px solid #3d7aa3;border-radius:.45rem;overflow:hidden}
-.font button{background:transparent;border:0;color:#fff;padding:.35rem .6rem;cursor:pointer;min-width:2.3rem}
-.font button+button{border-left:1px solid #3d7aa3}
+.font{display:flex;border:1px solid rgba(255,255,255,.55);border-radius:.45rem;overflow:hidden;flex:0 0 auto}
+.font button{background:transparent;border:0;color:#fff;padding:0;cursor:pointer;min-width:32px;min-height:32px;font-size:.85rem;line-height:1}
+.font button+button{border-left:1px solid rgba(255,255,255,.35)}
 .font button.on{background:var(--teal)}
 .filters input{flex:1;min-width:0;border-radius:.45rem;border:0;padding:.5rem .6rem}
 .filters select{border-radius:.45rem;border:0;padding:.45rem .3rem;max-width:8.5rem}
@@ -54,11 +60,11 @@ main{padding:.5rem .6rem 1rem;max-width:760px;margin:0 auto}
 .empty{text-align:center;color:var(--mute);padding:2rem 0}
 footer{font-size:.72rem;color:var(--mute);padding:0 .9rem 1.5rem;max-width:760px;margin:0 auto}
 @media(min-width:700px){.card{grid-template-columns:5rem 1fr auto}}
-/* keep header controls fitting on small phones at A+ */
-.row.tools{flex-wrap:wrap}
-.font button{font-size:15px;padding:6px 9px;min-width:38px}
-.tab{padding:.4rem .75rem}
-#lang{font-size:15px}
+/* compact header: lang+font on title row; tabs full width below */
+.row.tools{flex-wrap:nowrap}
+.row>.chrome{margin-left:.25rem}
+h1{flex:1 1 auto;min-width:0}
+h1 #title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 [hidden]{display:none!important}
 
 /* ===== v2: aviation visuals (self-drawn SVG, no logos) ===== */
@@ -181,3 +187,111 @@ h1 .logo{width:1.6rem;height:1.6rem;flex:0 0 auto;filter:drop-shadow(0 1px 2px r
 .detail .backbtn{position:absolute;top:.45rem;left:.45rem;z-index:3;margin:0;padding:.38rem .75rem;font-size:.85rem;max-width:calc(100% - 6.5rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .detail .gp-scene{padding-top:3rem}
 @media (max-width:380px){.detail .gp-scene{padding-top:2.9rem}}
+/* ===== v8: gate-floor people follow the real flight status — original CSS figures, transform/opacity animation only ===== */
+.gp-floor{height:4.2rem;contain:paint}
+.gp-crowd{position:absolute;inset:0;font-size:10px;pointer-events:none;z-index:1}
+.gp-bench{position:absolute;left:3%;bottom:1.1em;width:6em;height:.45em;background:#475569;border-radius:.2em}
+.gp-bench::before,.gp-bench::after{content:"";position:absolute;bottom:-.75em;width:.3em;height:.8em;background:#334155;left:.6em}
+.gp-bench::after{left:auto;right:.6em}
+.gp-bench .bk{position:absolute;left:0;right:0;bottom:.45em;height:1.25em;background:#64748b;border-radius:.25em .25em 0 0;opacity:.9}
+/* one figure: 1.2em x 3em, front view facing right (+x); .flip faces left */
+.pp{position:absolute;bottom:.55em;left:0;width:1.2em;height:3em}
+.pp b{position:absolute;display:block}
+.pp .hd{left:.26em;top:0;width:.68em;height:.68em;border-radius:50%;background:var(--sk);box-shadow:inset 0 .17em 0 var(--hr)}
+.pp .hr{left:.18em;top:-.04em;width:.84em;height:1.12em;border-radius:.42em .42em .22em .22em;background:var(--hr)}
+.pp .tb{left:.1em;top:.74em;width:1em;height:1.28em;border-radius:.45em .45em .18em .18em;background:var(--cl)}
+.pp .sk{left:.02em;top:1.5em;width:1.16em;height:.66em;border-radius:.08em .08em .32em .32em;background:var(--cl)}
+.pp .lg{left:.3em;top:1.95em;width:.27em;height:1em;background:var(--lc);border-radius:.14em;transform-origin:50% 0}
+.pp .lg2{left:.63em}
+.pp.fem .lg{width:.22em;left:.34em}.pp.fem .lg2{left:.64em}
+.pp .bag{left:-.62em;top:1.55em;width:.6em;height:.95em;background:var(--bc);border-radius:.12em;box-shadow:inset 0 .12em 0 rgba(255,255,255,.18)}
+.pp .bag::before{content:"";position:absolute;right:-.12em;top:-.5em;width:.12em;height:.55em;background:#4b5563;transform:rotate(25deg);transform-origin:50% 100%}
+.pp .bp{left:-.24em;top:.82em;width:.5em;height:1em;background:var(--bc);border-radius:.25em .1em .1em .25em}
+.pp.old .tb{transform:rotate(7deg);transform-origin:50% 100%}
+.pp.old .hd{transform:translateX(.12em)}
+.pp .stk{left:1.18em;top:1.3em;width:.11em;height:1.68em;background:#7c5a3a;border-radius:.06em;transform:rotate(-6deg)}
+.pp.kid{font-size:.62em}
+.pp .arm{left:.95em;top:1.05em;width:.17em;height:1.05em;background:var(--sk);border-radius:.1em;transform:rotate(-38deg);transform-origin:50% 0}
+.pp.flip{transform:scaleX(-1)}
+.pp.far{font-size:.86em;opacity:.85;bottom:1.55em}
+/* family group: parent + (stroller) + parent holding the child's hand */
+.grp{position:absolute;left:0;bottom:.55em;width:5em;height:3em}
+.grp.far{font-size:.86em;bottom:1.55em}
+.grp.flip{transform:scaleX(-1)}
+.grp .pp{bottom:0}
+.grp .g1{left:0}.grp .g2{left:2.65em}.grp .g3{left:6.1em}
+.grp.ns .g2{left:1.5em}.grp.ns .g3{left:4.2em}
+.stroller{position:absolute;left:1.2em;bottom:0;width:1.3em;height:1.7em}
+.stroller .sb{left:.1em;bottom:.38em;width:1.1em;height:.85em;background:var(--cl);border-radius:.55em .55em .2em .2em}
+.stroller::before{content:"";position:absolute;left:-.12em;bottom:.95em;width:.12em;height:.85em;background:#374151;transform:rotate(-35deg);transform-origin:50% 100%}
+.stroller .sw{left:.15em;bottom:0;width:.36em;height:.36em;border-radius:50%;background:#1f2937}
+.stroller .sw2{left:.8em}
+/* seated: thighs forward, shins down */
+.pp.sit{bottom:1.45em;height:2.3em}
+.pp.sit .lg{top:1.85em;height:.62em;transform:rotate(-90deg)}
+.pp.sit .lg2{left:.5em}
+.pp.sit .sh{left:.95em;top:1.95em;width:.27em;height:.8em;background:var(--lc);border-radius:.14em}
+.pp.sit .sh2{left:1.15em}
+.pp.sit .bag{left:1.6em;top:1.35em}
+.pp.sit .stk{left:1.45em;top:.9em}
+/* barrier tape (retractable belt) across the gate */
+.gp-tape{position:absolute;left:34%;right:34%;bottom:.55em;height:1.9em}
+.gp-tape .post{left:-.2em;bottom:0;width:.42em;height:1.9em;background:linear-gradient(90deg,#9aa3ab,#e5e9ec 50%,#8b949c);border-radius:.2em .2em .05em .05em}
+.gp-tape .post::after{content:"";position:absolute;left:-.25em;bottom:-.1em;width:.92em;height:.25em;background:#6b7280;border-radius:.2em}
+.gp-tape .p2{left:auto;right:-.2em}
+.gp-tape .belt{left:.1em;right:.1em;top:.2em;height:.42em;background:repeating-linear-gradient(135deg,#fcd116 0 .5em,#0b3c5d .5em 1em);border-radius:.06em;transform-origin:0 50%}
+/* doze + Zzz */
+.pp.doze .hd{transform:translate(.18em,.12em) rotate(22deg)}
+.zzz{left:.9em;top:-.6em;width:2em;height:2em;font:700 1em/1 system-ui,sans-serif;color:#334e68}
+.zzz b{left:0;bottom:0;opacity:0}
+.zzz b:nth-child(2){font-size:1.2em}.zzz b:nth-child(3){font-size:1.45em}
+/* ---- animations: transform / opacity only ---- */
+@keyframes hk-step{from{transform:rotate(24deg)}to{transform:rotate(-24deg)}}
+@keyframes hk-bob{from{transform:translateY(0)}to{transform:translateY(-.1em)}}
+@keyframes hk-sway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+@keyframes hk-swayf{0%,100%{transform:scaleX(-1) rotate(-2deg)}50%{transform:scaleX(-1) rotate(2deg)}}
+@keyframes hk-nod{0%,70%,100%{transform:translateY(0)}80%,90%{transform:translateY(.12em)}}
+@keyframes hk-read{0%,100%{transform:rotate(0)}50%{transform:rotate(8deg)}}
+@keyframes hk-breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.04)}}
+@keyframes hk-z{0%{transform:translate(0,0) scale(.6);opacity:0}20%{opacity:1}100%{transform:translate(.8em,-1.5em) scale(1.1);opacity:0}}
+.pp.walk .lg{animation:hk-step .55s ease-in-out infinite alternate}
+.pp.walk .lg2{animation-direction:alternate-reverse}
+.pp.walk .tb,.pp.walk .hd,.pp.walk .sk,.pp.walk .hr{animation:hk-bob .275s ease-in-out infinite alternate}
+.pp.old.walk .lg{animation-duration:.85s}.pp.old.walk .tb,.pp.old.walk .hd{animation:none}
+.pp.kid.walk .lg{animation-duration:.4s}
+.pp.sway{transform-origin:50% 100%;animation:hk-sway 5s ease-in-out infinite;animation-delay:var(--ph,0s)}
+.pp.sway2{transform-origin:50% 100%;animation:hk-sway 6.5s ease-in-out infinite;animation-delay:calc(var(--ph,0s) - 2s)}
+.pp.sway2.flip{animation-name:hk-swayf}
+.pp.nod .hd{animation:hk-nod 7s ease-in-out infinite;animation-delay:var(--ph,0s)}
+.pp.read .hd{transform-origin:50% 100%;animation:hk-read 9s ease-in-out infinite;animation-delay:calc(var(--ph,0s) - 3s)}
+.pp.doze .tb{transform-origin:50% 100%;animation:hk-breathe 4s ease-in-out infinite}
+.zzz b{animation:hk-z 3.6s ease-out infinite}
+.zzz b:nth-child(2){animation-delay:-1.2s}.zzz b:nth-child(3){animation-delay:-2.4s}
+/* walkers: a full-width track slides, so translateX(%) is a share of the floor width */
+.pp-trk{position:absolute;inset:0;will-change:transform,opacity}
+@keyframes hk-w1{from{transform:translateX(-8%)}to{transform:translateX(104%)}}
+@keyframes hk-w2{from{transform:translateX(104%)}to{transform:translateX(-18%)}}
+@keyframes hk-queue{0%{transform:translateX(102%);opacity:0}4%{opacity:1}80%{transform:translateX(50%);opacity:1}88%,100%{transform:translateX(47%);opacity:0}}
+@keyframes hk-late{0%{transform:translateX(104%);opacity:0}4%{opacity:1}45%{transform:translateX(69%);opacity:1}46%,100%{transform:translateX(69%);opacity:0}}
+@keyframes hk-blocked{0%,45%{opacity:0}46%,90%{opacity:1}97%,100%{opacity:0}}
+@keyframes hk-leave{0%{transform:translateX(50%);opacity:0}8%{opacity:1}85%{transform:translateX(104%);opacity:1}86%,100%{transform:translateX(104%);opacity:0}}
+@keyframes hk-in{from{opacity:0}to{opacity:1}}
+@keyframes hk-out{from{opacity:1}to{opacity:0}}
+@keyframes hk-belt{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.w1{transform:translateX(42%);animation:hk-w1 26s linear infinite;animation-delay:var(--ph,0s)}
+.w2{transform:translateX(84%);animation:hk-w2 34s linear infinite;animation-delay:calc(var(--ph,0s) - 11s)}
+.w3{transform:translateX(14%);animation:hk-w1 44s linear infinite;animation-delay:calc(var(--ph,0s) - 30s)}
+.q{transform:translateX(var(--x));animation:hk-queue 15s linear infinite;animation-delay:calc(var(--ph,0s) + var(--d,0s))}
+.late{opacity:0;transform:translateX(69%);animation:hk-late 16s linear infinite;animation-delay:var(--ph,0s)}
+.pp.blocked{animation:hk-blocked 16s linear infinite;animation-delay:var(--ph,0s)}
+.leave{transform:translateX(72%);animation:hk-leave 20s linear infinite;animation-delay:var(--ph,0s)}
+.gp-crowd.in{animation:hk-in 1.2s ease both}
+.gp-crowd.out{animation:hk-out 1.2s ease both}
+.gp-crowd.in .belt{animation:hk-belt 1.4s ease-out both}
+/* reduced motion: completely still; the still scene still shows the status (queue / barrier / dozing / empty) */
+@media (prefers-reduced-motion:reduce){
+  .gp-crowd,.gp-crowd *,.gp-crowd *::before,.gp-crowd *::after{animation:none!important}
+  .pp-trk{will-change:auto}
+  .zzz b{opacity:1}.zzz b:nth-child(1){transform:translate(0,0)}.zzz b:nth-child(2){transform:translate(.45em,-.7em)}.zzz b:nth-child(3){transform:translate(.9em,-1.5em)}
+}
+.gp-tape b,.stroller b{position:absolute;display:block}
