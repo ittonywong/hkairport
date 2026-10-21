@@ -10,6 +10,7 @@ it directly; this script runs on GitHub Actions (or your own PC) instead.
 Python standard library only - nothing to install.
 """
 import json, os, sys, time, urllib.request, urllib.error
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from datetime import datetime, timedelta, timezone
 
 HKT = timezone(timedelta(hours=8))
@@ -108,6 +109,14 @@ def main():
                 out["names"] = json.load(fh).get("names", lookups)
         except Exception:
             out["names"] = lookups
+
+    # v9: aircraft type + registration (adsb.lol, ODbL) - optional, never blocks the flight data
+    try:
+        import aircraft_match
+        prev = aircraft_match.load_prev(os.path.join(OUT_DIR, "flights.json"), os.environ.get("GITHUB_REPOSITORY"))
+        aircraft_match.apply(out, prev, now)
+    except Exception as e:
+        out["warnings"].append(f"aircraft: {e}")
 
     os.makedirs(OUT_DIR, exist_ok=True)
     tmp = os.path.join(OUT_DIR, "flights.json.tmp")

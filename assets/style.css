@@ -295,3 +295,10 @@ h1 .logo{width:1.6rem;height:1.6rem;flex:0 0 auto;filter:drop-shadow(0 1px 2px r
   .zzz b{opacity:1}.zzz b:nth-child(1){transform:translate(0,0)}.zzz b:nth-child(2){transform:translate(.45em,-.7em)}.zzz b:nth-child(3){transform:translate(.9em,-1.5em)}
 }
 .gp-tape b,.stroller b{position:absolute;display:block}
+
+/* ===== v9: aircraft type + registration on the pillar ===== */
+.gp-ac{margin-top:.3rem;font-size:.78rem;color:#dbe7f3;line-height:1.3;overflow-wrap:anywhere}
+.gp-ac .l{color:#9fb6d3}
+.gp-ac .ty{font-weight:700;color:#fff}
+.gp-ac .rg{font-weight:700;color:#fcd116;font-variant-numeric:tabular-nums;letter-spacing:.02em;white-space:nowrap}
+.gp-ac .na{color:#9fb6d3;font-style:italic}

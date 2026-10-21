@@ -197,6 +197,26 @@
     }
   }
 
+  // ---- v9: aircraft type + registration (adsb.lol, ODbL; only confident callsign matches are in the data) ----
+  // ICAO type designator -> model (manufacturer word is translated; unknown designators are shown as-is)
+  var ACTYPE = { A19N: "A319neo", A20N: "A320neo", A21N: "A321neo", A319: "A319", A320: "A320", A321: "A321", A332: "A330-200", A333: "A330-300", A338: "A330-800neo", A339: "A330-900neo",
+    A359: "A350-900", A35K: "A350-1000", A388: "A380-800", A306: "A300-600", B38M: "737 MAX 8", B39M: "737 MAX 9", B737: "737-700", B738: "737-800", B739: "737-900", B744: "747-400", B748: "747-8",
+    B752: "757-200", B763: "767-300", B772: "777-200", B77L: "777-200LR/777F", B773: "777-300", B77W: "777-300ER", B778: "777-8", B779: "777-9", B788: "787-8", B789: "787-9", B78X: "787-10",
+    A21X: "A321XLR", BCS3: "A220-300", E190: "E190", E195: "E195", E290: "E190-E2", E295: "E195-E2", AT76: "ATR 72-600", C919: "C919", AJ27: "ARJ21" };
+  var MAKER = { A: "airbus", B: "boeing", E: "embraer" };
+  function acTypeName(code, t) {
+    var m = ACTYPE[code]; if (!m) return code;
+    if (code === "BCS3") return t.mk.airbus + " " + m;
+    if (code === "C919" || code === "AJ27") return "COMAC " + m;
+    if (code === "AT76") return m;
+    var mk = MAKER[code.charAt(0)]; return (mk ? t.mk[mk] + " " : "") + m;
+  }
+  function acLine(r, t) {
+    var a = r.ac && r.ac.length >= 2 && r.ac[0] && r.ac[1] ? r.ac : null;
+    return '<div class="gp-ac" data-ac="' + (a ? esc(a[1] + "|" + a[0]) : "none") + '"><span class="l">' + esc(t.aircraft) + "</span> " +
+      (a ? '<b class="ty">' + esc(acTypeName(a[1], t)) + '</b> <span class="rg">' + esc(a[0]) + "</span>" : '<span class="na">' + esc(t.acNone) + "</span>") + "</div>";
+  }
+
   // ---- v8: little people on the gate floor follow the real flight status (original CSS figures, decorative) ----
   // status -> scene (raw HKIA "status" text; statusCode is always null in the feed):
   //   ""(scheduled), "Boarding Soon", "Est at HH:MM" (incl. delayed), "Delayed", anything unknown -> wait
@@ -316,7 +336,7 @@
         (sch.ymd !== hkParts(now).ymd ? '<span class="gp-day">' + sch.dm + "</span>" : "") + "</div></div>" +
       '<div class="gp-red"><div class="gp-hkto">' + esc(t.hkTo) + '</div><div class="gp-dest" data-fit="1" title="' + esc(r.p.join(" / ")) + '">' + esc(dest) + "</div></div></div>";
     var status = '<div class="gp-status"><span class="gp-st st-' + stCls + '">' + esc(stTxt) + "</span>" + dly + "</div>" +
-      '<div class="gp-meta">' + esc(r.tm) + (r.ai ? " · " + esc(t.aisle) + " " + esc(r.ai) : "") + "</div>";
+      '<div class="gp-meta">' + esc(r.tm) + (r.ai ? " · " + esc(t.aisle) + " " + esc(r.ai) : "") + "</div>" + acLine(r, t);
     var nexts = (recent ? up : up.slice(1)).slice(0, 3);
     var later = nexts.length ? '<div class="gp-next"><div class="gp-nh">' + esc(t.bNext) + "</div>" + nexts.map(function (x) {
       return '<div class="gp-nr"><span class="gp-nt">' + hkParts(x.sched).hm + '</span><b>' + esc(x.nos[0]) + '</b><span class="gp-np">' + esc(x.raw.p.map(placeName).join(" / ")) +
@@ -356,7 +376,7 @@
     [0, 1, 2].forEach(function (i) { $("fs-" + i).classList.toggle("on", S.fs === i); $("fs-" + i).title = t.font; });
     $("q").placeholder = S.tab === "dep" ? t.qDep : t.qArr;
     $("refresh").title = t.refresh; $("refresh").setAttribute("aria-label", t.refresh);
-    $("foot").textContent = t.source;
+    $("foot").textContent = t.source + " " + t.acSrc;
     $("gate").hidden = S.tab !== "dep";
     $("back").textContent = "← " + t.back;
     if (!S.data) { $("upd").textContent = S.error ? t.error : t.loading; $("cd").textContent = ""; $("list").innerHTML = ""; return; }
